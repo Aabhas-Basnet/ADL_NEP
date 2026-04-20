@@ -16,6 +16,8 @@ st.markdown("""
     .contact { background: #f8f9fa; padding: 8px; border-radius: 5px; margin-top: 10px; font-size: 0.85rem; border: 1px solid #eee; }
     .btn { display: inline-block; background: #1877f2; color: white !important; padding: 6px 12px; border-radius: 5px; text-decoration: none; font-size: 0.8rem; margin-top: 10px; }
     </style>
+    footer { visibility: hidden; }
+    #GithubIcon { visibility: hidden; }
     """, unsafe_allow_html=True)
 
 MASTER_FILE = "master.csv"
