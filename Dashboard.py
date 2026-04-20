@@ -7,7 +7,20 @@ st.set_page_config(page_title="Adelaide Nepal", page_icon="ADL_NPL.jpg")
 
 st.markdown("""
     <style>
-    .stApp { background-color: #f2f4f7; }
+    /* 1. Force the main background and text colors */
+    .stApp { background-color: #f2f4f7; color: #1c1e21; }
+    
+    /* 2. Force Title and Label visibility */
+    h1, label, p { color: #1c1e21 !important; }
+    
+    /* 3. Style the Search Bar and Select Boxes to stay visible */
+    .stTextInput input, .stSelectbox div[data-baseweb="select"] {
+        color: #1c1e21 !important;
+        background-color: white !important;
+        border: 1px solid #dddfe2 !important;
+    }
+
+    /* 4. Post Card Styles */
     .post-card { 
         background: white; padding: 15px; border-radius: 8px; 
         border: 1px solid #ddd; margin-bottom: 10px; color: #1c1e21;
