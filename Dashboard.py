@@ -5,18 +5,6 @@ import os, re
 # --- 1. UI CONFIG & STYLE ---
 st.set_page_config(page_title="Adelaide Nepal", page_icon="ADL_NPL.jpg")
 
-st.markdown("""
-    <style>
-    .stApp { background-color: #f2f4f7; }
-    .post-card { 
-        background: white; padding: 15px; border-radius: 8px; 
-        border: 1px solid #ddd; margin-bottom: 10px; color: #1c1e21;
-    }
-    .badge { background: #e7f3ff; color: #1877f2; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: bold; }
-    .contact { background: #f8f9fa; padding: 8px; border-radius: 5px; margin-top: 10px; font-size: 0.85rem; border: 1px solid #eee; }
-    .btn { display: inline-block; background: #1877f2; color: white !important; padding: 6px 12px; border-radius: 5px; text-decoration: none; font-size: 0.8rem; margin-top: 10px; }
-    </style>
-    """, unsafe_allow_html=True)
 
 st.markdown("""
     <style>
