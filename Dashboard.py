@@ -15,10 +15,34 @@ st.markdown("""
     .badge { background: #e7f3ff; color: #1877f2; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: bold; }
     .contact { background: #f8f9fa; padding: 8px; border-radius: 5px; margin-top: 10px; font-size: 0.85rem; border: 1px solid #eee; }
     .btn { display: inline-block; background: #1877f2; color: white !important; padding: 6px 12px; border-radius: 5px; text-decoration: none; font-size: 0.8rem; margin-top: 10px; }
-    footer { visibility: hidden; }
-    #GithubIcon { visibility: hidden; }
     </style>
     """, unsafe_allow_html=True)
+
+st.markdown("""
+    <style>
+    /* 1. Hides the top right GitHub icon, fork, and setup buttons */
+    #GithubIcon, .stDeployButton, [data-testid="stStatusWidget"] { 
+        display: none !important; 
+    }
+    
+    /* 2. Hides the "Made with Streamlit" watermark and your name/repo link */
+    footer { 
+        visibility: hidden !important; 
+        height: 0px; 
+    }
+    
+    /* 3. Hides the 'hamburger' menu to stop people from seeing the 'View Source' link */
+    #MainMenu { 
+        visibility: hidden !important; 
+    }
+
+    /* 4. Optional: Removes the top white space left by the hidden header */
+    .block-container { 
+        padding-top: 2rem !important; 
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 
 MASTER_FILE = "master.csv"
 FB_DATA_FILE = "fb_data.csv"
