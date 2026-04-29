@@ -1,51 +1,33 @@
 import streamlit as st
 import pandas as pd
-import os, re
+import os, re, requests
+from datetime import datetime, timedelta
 
-# --- 1. UI CONFIG & STYLE ---
-st.set_page_config(page_title="Adelaide Nepal", page_icon="ADL_NPL.jpg")
-
+# --- 1. UI CONFIG & STYLE (Your Original Design) ---
 st.set_page_config(page_title="Adelaide Nepal", page_icon="ADL_NPL.jpg")
 
 st.markdown("""
     <style>
-    /* 1. HIDE ALL BRANDING */
-    header, footer, [data-testid="stHeader"], #MainMenu, #GithubIcon, .stDeployButton {
-        visibility: hidden !important; display: none !important;
-    }
-    
-    /* 2. FORCE DARK TEXT FOR LIGHT THEME */
-    .stApp { background-color: #f2f4f7 !important; }
-    
-    /* Force title, labels, and normal text to be Dark Grey/Black */
-    h1, h2, h3, label, p, .stMarkdown, [data-testid="stWidgetLabel"] p { 
-        color: #1c1e21 !important; 
-    }
-    
-    /* 3. FIX SEARCH BAR VISIBILITY */
-    .stTextInput input {
-        color: #1c1e21 !important;
-        background-color: white !important;
-        border: 1px solid #dddfe2 !important;
-    }
-
-    /* 4. POST CARD STYLING */
+    .stApp { background-color: #f2f4f7; }
     .post-card { 
         background: white; padding: 15px; border-radius: 8px; 
-        border: 1px solid #dddfe2; margin-bottom: 10px; color: #1c1e21;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        border: 1px solid #ddd; margin-bottom: 10px; color: #1c1e21;
     }
     .badge { background: #e7f3ff; color: #1877f2; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: bold; }
-    .contact { background: #f8f9fa; padding: 8px; border-radius: 5px; margin-top: 10px; font-size: 0.85rem; border: 1px solid #eee; color: #1c1e21; }
+    .contact { background: #f8f9fa; padding: 8px; border-radius: 5px; margin-top: 10px; font-size: 0.85rem; border: 1px solid #eee; }
     .btn { display: inline-block; background: #1877f2; color: white !important; padding: 6px 12px; border-radius: 5px; text-decoration: none; font-size: 0.8rem; margin-top: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
-
 MASTER_FILE = "master.csv"
 FB_DATA_FILE = "fb_data.csv"
 
-# --- 2. EXTRACTION LOGIC ---
+# Access Secrets
+PAGE_ID = st.secrets.get("FB_PAGE_ID", "YOUR_PAGE_ID")
+ACCESS_TOKEN = st.secrets.get("FB_ACCESS_TOKEN", "YOUR_TOKEN")
+
+# --- 2. LOGIC: FETCH & EXTRACTION ---
+
 def get_meta(text):
     t = str(text).lower()
     if any(x in t for x in ["room", "rent", "kotha", "sharing", "flat"]): cat = "Accommodation"
@@ -58,22 +40,53 @@ def get_meta(text):
     em = re.findall(r'[\w\.-]+@[\w\.-]+\.\w+', str(text))
     return cat, loc, ph[0] if ph else "", em[0] if em else ""
 
+def fetch_facebook_data():
+    """Fetches the last 14 days of data from FB API."""
+    since_date = int((datetime.now() - timedelta(days=14)).timestamp())
+    all_posts = []
+    url = f"https://graph.facebook.com/v19.0/{PAGE_ID}/feed"
+    params = {
+        'access_token': ACCESS_TOKEN,
+        'since': since_date,
+        'limit': 50, 
+        'fields': 'id,message,created_time,permalink_url'
+    }
+    
+    try:
+        while url:
+            response = requests.get(url, params=params)
+            response.raise_for_status()
+            res_json = response.json()
+            data = res_json.get('data', [])
+            all_posts.extend(data)
+            url = res_json.get('paging', {}).get('next')
+            params = {} 
+            if not data: break
+
+        df = pd.DataFrame(all_posts)
+        if not df.empty:
+            df = df.rename(columns={'id': 'Post ID', 'message': 'Description', 'created_time': 'Publish time', 'permalink_url': 'Permalink'})
+            df['Publish time'] = pd.to_datetime(df['Publish time']).dt.strftime('%Y-%m-%d %H:%M')
+            df.to_csv(FB_DATA_FILE, index=False)
+            return True
+    except Exception as e:
+        st.error(f"Fetch Error: {e}")
+    return False
+
 @st.cache_data
 def load_data():
-    if os.path.exists(MASTER_FILE): 
-        return pd.read_csv(MASTER_FILE).fillna("")
-    
+    # If file doesn't exist, try to fetch it first
+    if not os.path.exists(FB_DATA_FILE):
+        fetch_facebook_data()
+        
     if os.path.exists(FB_DATA_FILE):
         raw = pd.read_csv(FB_DATA_FILE)
         data = []
         for _, r in raw.iterrows():
-            txt = str(r.get('Title', r.get('Description', '')))
+            txt = str(r.get('Description', ''))
             if len(txt) < 10: continue
             
             c, l, p, e = get_meta(txt)
-            
-            # Exact match for 'Publish time'
-            # Also checks 'Publish Time' as a backup
             time_val = r.get('Publish time')
             
             data.append({
@@ -83,18 +96,26 @@ def load_data():
                 "Loc": l, 
                 "Ph": p, 
                 "Em": e, 
-                "Url": str(r.get('Permalink', r.get('Link', '#')))
+                "Url": str(r.get('Permalink', '#'))
             })
         df = pd.DataFrame(data)
         df.to_csv(MASTER_FILE, index=False)
         return df
     return pd.DataFrame(columns=["Time", "Text", "Cat", "Loc", "Ph", "Em", "Url"])
 
-# --- 3. UI ---
+# --- 3. UI (Your Original Design) ---
+
 col_l, col_r = st.columns([1, 6])
 if os.path.exists("ADL_NPL.jpg"):
     col_l.image("ADL_NPL.jpg", width=70)
 col_r.title("Adelaide Nepal Community")
+
+# Refresh Button
+if st.button("🔄 Update Feed from Facebook"):
+    with st.spinner("Fetching latest updates..."):
+        if fetch_facebook_data():
+            st.cache_data.clear()
+            st.rerun()
 
 df = load_data()
 search = st.text_input("🔍 Search feed...")
@@ -111,7 +132,6 @@ if search: v = v[v['Text'].str.contains(search, case=False)]
 st.divider()
 
 for _, r in v.head(100).iterrows():
-    # Safety get for Time
     time_val = r.get('Time')
     contact = f"<div class='contact'><b>📞</b> {r['Ph']} <br> <b>📧</b> {r['Em']}</div>" if r['Ph'] or r['Em'] else ""
     btn = f"<a href='{r['Url']}' target='_blank' class='btn'>View Original</a>" if r['Url'] != "#" else ""
